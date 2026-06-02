@@ -105,6 +105,7 @@ class OpenSearchService:
                             }
                         },
                         "industry": {"type": "keyword"},
+                        "muse_id": {"type": "integer"},
                         "inserted_date": {"type": "date"},
                         "is_active": {"type": "boolean"},
                         "is_archived": {"type": "boolean"},
@@ -561,6 +562,7 @@ class OpenSearchService:
             'english_fluency': 'english_fluency',
             'experience': 'experience',
             'greenhouse_id': 'greenhouse_id',
+            'muse_id': 'muse_id',
             'industry': 'industry',
             'inserted_date': 'inserted_date',
             'is_active': 'is_active',

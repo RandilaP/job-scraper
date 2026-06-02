@@ -87,6 +87,7 @@ class JobMongo(BaseModel):
     distance: Optional[float] = None
     industry: str
     greenhouse_id: Optional[int] = None
+    muse_id: Optional[int] = None
     source: Optional[str] = "greenhouse"
     inserted_date: Optional[datetime] = None
     redirect_path: Optional[str] = None
@@ -109,9 +110,15 @@ class RunStats(BaseModel):
     workday_jobs_inserted: int = Field(default=0, description="Workday jobs inserted to DB")
     workday_jobs_existed: int = Field(default=0, description="Workday jobs already existed")
     workday_jobs_failed: int = Field(default=0, description="Workday jobs failed to process")
-    
+
+    muse_jobs_processed: int = Field(default=0, description="Muse jobs processed")
+    muse_jobs_inserted: int = Field(default=0, description="Muse jobs inserted to DB")
+    muse_jobs_failed: int = Field(default=0, description="Muse jobs failed to process")
+    muse_companies_processed: int = Field(default=0, description="Muse companies processed")
+    muse_expired_removed: int = Field(default=0, description="Muse expired jobs removed")
+
     # Processing info
-    job_source: str = Field(description="Source: 'greenhouse', 'workday', or 'both'")
+    job_source: str = Field(description="Source: 'greenhouse', 'workday', 'muse', 'both', or 'all'")
     companies_processed: int = Field(default=0, description="Total companies processed")
     
     # OpenSearch sync

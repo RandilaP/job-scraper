@@ -52,13 +52,16 @@ def main() -> None:
         'greenhouse_jobs_inserted': 0,
         'greenhouse_jobs_existed': 0,
         'greenhouse_jobs_failed': 0,
+        'greenhouse_jobs_not_found': 0,
         'workday_jobs_new': 0,
         'workday_jobs_inserted': 0,
         'workday_jobs_existed': 0,
         'workday_jobs_failed': 0,
+        'workday_jobs_not_found': 0,
         'muse_jobs_processed': 0,
         'muse_jobs_inserted': 0,
         'muse_jobs_failed': 0,
+        'muse_jobs_not_found': 0,
         'muse_companies_processed': 0,
         'muse_expired_removed': 0,
         'companies_processed': 0,
@@ -73,6 +76,7 @@ def main() -> None:
         total_stats['muse_jobs_processed'] += muse_stats.get('jobs_processed', 0)
         total_stats['muse_jobs_inserted'] += muse_stats.get('jobs_inserted', 0)
         total_stats['muse_jobs_failed'] += muse_stats.get('jobs_failed', 0)
+        total_stats['muse_jobs_not_found'] += muse_stats.get('jobs_not_found', 0)
         total_stats['muse_companies_processed'] += muse_stats.get('companies_processed', 0)
         total_stats['muse_expired_removed'] += muse_stats.get('id_maintenance_expired', 0)
         total_stats['companies_processed'] += muse_stats.get('companies_processed', 0)
@@ -94,6 +98,7 @@ def main() -> None:
                 total_stats['greenhouse_jobs_inserted'] = gh_stats.get('jobs_inserted', 0)
                 total_stats['greenhouse_jobs_existed'] = gh_stats.get('jobs_existed', 0)
                 total_stats['greenhouse_jobs_failed'] = gh_stats.get('jobs_failed', 0)
+                total_stats['greenhouse_jobs_not_found'] = gh_stats.get('jobs_not_found', 0)
                 total_stats['companies_processed'] = gh_stats.get('companies_processed', 0)
                 total_stats['opensearch_indexed'] = gh_stats.get('jobs_indexed_opensearch', 0)
             
@@ -107,6 +112,7 @@ def main() -> None:
                 total_stats['workday_jobs_inserted'] = wd_stats.get('jobs_inserted', 0)
                 total_stats['workday_jobs_existed'] = wd_stats.get('jobs_existed', 0)
                 total_stats['workday_jobs_failed'] = wd_stats.get('jobs_failed', 0)
+                total_stats['workday_jobs_not_found'] = wd_stats.get('jobs_not_found', 0)
                 total_stats['companies_processed'] = wd_stats.get('companies_processed', 0)
                 total_stats['opensearch_indexed'] = wd_stats.get('jobs_indexed_opensearch', 0)
             
@@ -127,6 +133,7 @@ def main() -> None:
                 total_stats['greenhouse_jobs_inserted'] = gh_stats.get('jobs_inserted', 0)
                 total_stats['greenhouse_jobs_existed'] = gh_stats.get('jobs_existed', 0)
                 total_stats['greenhouse_jobs_failed'] = gh_stats.get('jobs_failed', 0)
+                total_stats['greenhouse_jobs_not_found'] = gh_stats.get('jobs_not_found', 0)
                 total_stats['companies_processed'] += gh_stats.get('companies_processed', 0)
                 total_stats['opensearch_indexed'] += gh_stats.get('jobs_indexed_opensearch', 0)
             
@@ -141,6 +148,7 @@ def main() -> None:
                 total_stats['workday_jobs_inserted'] = wd_stats.get('jobs_inserted', 0)
                 total_stats['workday_jobs_existed'] = wd_stats.get('jobs_existed', 0)
                 total_stats['workday_jobs_failed'] = wd_stats.get('jobs_failed', 0)
+                total_stats['workday_jobs_not_found'] = wd_stats.get('jobs_not_found', 0)
                 total_stats['companies_processed'] += wd_stats.get('companies_processed', 0)
                 total_stats['opensearch_indexed'] += wd_stats.get('jobs_indexed_opensearch', 0)
 
@@ -169,6 +177,7 @@ def main() -> None:
                 total_stats['greenhouse_jobs_inserted'] = gh_stats.get('jobs_inserted', 0)
                 total_stats['greenhouse_jobs_existed'] = gh_stats.get('jobs_existed', 0)
                 total_stats['greenhouse_jobs_failed'] = gh_stats.get('jobs_failed', 0)
+                total_stats['greenhouse_jobs_not_found'] = gh_stats.get('jobs_not_found', 0)
                 total_stats['companies_processed'] += gh_stats.get('companies_processed', 0)
                 total_stats['opensearch_indexed'] += gh_stats.get('jobs_indexed_opensearch', 0)
 
@@ -182,6 +191,7 @@ def main() -> None:
                 total_stats['workday_jobs_inserted'] = wd_stats.get('jobs_inserted', 0)
                 total_stats['workday_jobs_existed'] = wd_stats.get('jobs_existed', 0)
                 total_stats['workday_jobs_failed'] = wd_stats.get('jobs_failed', 0)
+                total_stats['workday_jobs_not_found'] = wd_stats.get('jobs_not_found', 0)
                 total_stats['companies_processed'] += wd_stats.get('companies_processed', 0)
                 total_stats['opensearch_indexed'] += wd_stats.get('jobs_indexed_opensearch', 0)
 

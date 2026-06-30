@@ -105,15 +105,18 @@ class RunStats(BaseModel):
     greenhouse_jobs_inserted: int = Field(default=0, description="Greenhouse jobs inserted to DB")
     greenhouse_jobs_existed: int = Field(default=0, description="Greenhouse jobs already existed")
     greenhouse_jobs_failed: int = Field(default=0, description="Greenhouse jobs failed to process")
-    
+    greenhouse_jobs_not_found: int = Field(default=0, description="Greenhouse jobs gone from source (403/404), removed from new_jobs")
+
     workday_jobs_new: int = Field(default=0, description="New Workday jobs found")
     workday_jobs_inserted: int = Field(default=0, description="Workday jobs inserted to DB")
     workday_jobs_existed: int = Field(default=0, description="Workday jobs already existed")
     workday_jobs_failed: int = Field(default=0, description="Workday jobs failed to process")
+    workday_jobs_not_found: int = Field(default=0, description="Workday jobs gone from source (404), removed from new_job_links")
 
     muse_jobs_processed: int = Field(default=0, description="Muse jobs processed")
     muse_jobs_inserted: int = Field(default=0, description="Muse jobs inserted to DB")
     muse_jobs_failed: int = Field(default=0, description="Muse jobs failed to process")
+    muse_jobs_not_found: int = Field(default=0, description="Muse jobs gone from source (404), removed from new_jobs")
     muse_companies_processed: int = Field(default=0, description="Muse companies processed")
     muse_expired_removed: int = Field(default=0, description="Muse expired jobs removed")
 

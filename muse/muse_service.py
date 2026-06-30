@@ -92,6 +92,7 @@ class MuseExtractionService:
                 'jobs_inserted': 0,
                 'jobs_existed': 0,
                 'jobs_failed': 0,
+                'jobs_not_found': 0,
                 'jobs_indexed_opensearch': 0,
                 'jobs_opensearch_failed': 0,
                 # Include ID maintenance stats
@@ -114,8 +115,8 @@ class MuseExtractionService:
 
                 # Aggregate statistics
                 for key in ['companies_processed', 'jobs_processed', 'jobs_inserted',
-                           'jobs_existed', 'jobs_failed', 'jobs_indexed_opensearch',
-                           'jobs_opensearch_failed']:
+                           'jobs_existed', 'jobs_failed', 'jobs_not_found',
+                           'jobs_indexed_opensearch', 'jobs_opensearch_failed']:
                     total_stats[key] += batch_stats.get(key, 0)
 
                 # If we processed fewer companies than the batch size, we're done
@@ -157,6 +158,7 @@ class MuseExtractionService:
             'jobs_inserted': 0,
             'jobs_existed': 0,
             'jobs_failed': 0,
+            'jobs_not_found': 0,
             'jobs_indexed_opensearch': 0,
             'jobs_opensearch_failed': 0,
             'start_time': time.time(),
@@ -198,6 +200,7 @@ class MuseExtractionService:
                     stats['jobs_inserted'] += company_stats['jobs_inserted']
                     stats['jobs_existed'] += company_stats['jobs_existed']
                     stats['jobs_failed'] += company_stats['jobs_failed']
+                    stats['jobs_not_found'] += company_stats.get('jobs_not_found', 0)
                     stats['jobs_indexed_opensearch'] += company_stats.get('jobs_indexed_opensearch', 0)
                     stats['jobs_opensearch_failed'] += company_stats.get('jobs_opensearch_failed', 0)
 
@@ -223,6 +226,7 @@ class MuseExtractionService:
             'jobs_inserted': 0,
             'jobs_existed': 0,
             'jobs_failed': 0,
+            'jobs_not_found': 0,
             'jobs_indexed_opensearch': 0,
             'jobs_opensearch_failed': 0
         }
@@ -255,6 +259,8 @@ class MuseExtractionService:
                         company_stats['jobs_opensearch_failed'] += 1
                 elif job_result['status'] == 'existed':
                     company_stats['jobs_existed'] += 1
+                elif job_result['status'] == 'not_found':
+                    company_stats['jobs_not_found'] += 1
                 else:
                     company_stats['jobs_failed'] += 1
 

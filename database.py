@@ -72,7 +72,14 @@ class DatabaseManager:
             
             # Workday database
             self.workday_company_collection = self.greenhouse_db['WorkdayCompanyData']
-            
+
+            # Muse company data (job-ID tracking per company)
+            self.muse_company_collection = self.greenhouse_db['museCompanyData']
+
+            # Employers collection (UsersDB) - source of Muse companies for ID maintenance
+            self.users_db = self.client['UsersDB']
+            self.employers_collection = self.users_db['employers']
+
             # Stats collection for tracking runs
             self.stats_collection = self.greenhouse_db['stats']
             
@@ -562,5 +569,70 @@ class DatabaseManager:
             except Exception as e:
                 logging.error(f"Failed to get run stat: {e}")
                 return None
-        
+
         return self._retry_operation(_get_stat)
+
+    # ===== Muse Methods =====
+
+    def fetch_muse_company_data(self, skip: int = 0, limit: int = 100) -> List[Dict]:
+        """Fetch Muse companies with new_jobs from museCompanyData with retry logic"""
+        def _fetch():
+            try:
+                # Only log total count on first batch to avoid overhead
+                if skip == 0:
+                    total_count = self.muse_company_collection.count_documents(
+                        {"new_jobs": {"$exists": True, "$ne": []}}
+                    )
+                    logging.info(f"Total Muse companies with new jobs: {total_count}")
+
+                logging.info(f"Fetching Muse companies: skip={skip}, limit={limit}")
+
+                # Only fetch companies that have new_jobs to process.
+                # no_cursor_timeout prevents the cursor expiring during slow API+parse work.
+                company_data = self.muse_company_collection.find(
+                    {"new_jobs": {"$exists": True, "$ne": []}},
+                    {
+                        "company": 1,
+                        "_id": 1,
+                        "logo": 1,
+                        "new_jobs": 1,
+                        "employer_id": 1,
+                        "unique_name": 1
+                    },
+                    no_cursor_timeout=True
+                ).sort("_id", 1).skip(skip).limit(limit)
+
+                try:
+                    result = list(company_data)
+                finally:
+                    company_data.close()
+                logging.info(f"Query returned {len(result)} Muse companies")
+                return result
+
+            except Exception as e:
+                logging.error(f"Error fetching Muse company data: {str(e)}")
+                return []
+
+        return self._retry_operation(_fetch)
+
+    def muse_job_exists(self, muse_id: int) -> bool:
+        """Check if a job with the given muse_id already exists with retry logic"""
+        def _check():
+            return self.job_extractions_collection.find_one({"muse_id": muse_id}, {"_id": 1}) is not None
+
+        return self._retry_operation(_check)
+
+    def update_muse_company_job_status(self, unique_name: str, job_id: int):
+        """Remove job from new_jobs in Muse company data after processing with retry logic"""
+        def _update():
+            try:
+                self.muse_company_collection.update_one(
+                    {"unique_name": unique_name},
+                    {"$pull": {"new_jobs": {"id": job_id}}}
+                )
+                logging.debug(f"Updated Muse company data for unique_name: {unique_name}, removed job ID {job_id} from 'new_jobs'.")
+
+            except Exception as e:
+                logging.error(f"Failed to update Muse company job status: {e}")
+
+        return self._retry_operation(_update)

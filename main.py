@@ -13,6 +13,7 @@ from database import DatabaseManager
 from models import RunStats
 from greenhouse.greenhouse_service import GreenhouseExtractionService
 from workday.workday_service import WorkdayExtractionService
+from muse.muse_service import MuseExtractionService
 from logtail_handler import setup_logtail_logging
 from sync_opensearch_mongodb import JobSyncService
 from cache_utils import CacheManager
@@ -51,14 +52,35 @@ def main() -> None:
         'greenhouse_jobs_inserted': 0,
         'greenhouse_jobs_existed': 0,
         'greenhouse_jobs_failed': 0,
+        'greenhouse_jobs_not_found': 0,
         'workday_jobs_new': 0,
         'workday_jobs_inserted': 0,
         'workday_jobs_existed': 0,
         'workday_jobs_failed': 0,
+        'workday_jobs_not_found': 0,
+        'muse_jobs_processed': 0,
+        'muse_jobs_inserted': 0,
+        'muse_jobs_failed': 0,
+        'muse_jobs_not_found': 0,
+        'muse_companies_processed': 0,
+        'muse_expired_removed': 0,
         'companies_processed': 0,
         'opensearch_indexed': 0,
         'opensearch_deleted': 0
     }
+
+    def _aggregate_muse_stats(muse_stats: dict) -> None:
+        """Fold a MuseExtractionService.run() result into total_stats."""
+        if not muse_stats:
+            return
+        total_stats['muse_jobs_processed'] += muse_stats.get('jobs_processed', 0)
+        total_stats['muse_jobs_inserted'] += muse_stats.get('jobs_inserted', 0)
+        total_stats['muse_jobs_failed'] += muse_stats.get('jobs_failed', 0)
+        total_stats['muse_jobs_not_found'] += muse_stats.get('jobs_not_found', 0)
+        total_stats['muse_companies_processed'] += muse_stats.get('companies_processed', 0)
+        total_stats['muse_expired_removed'] += muse_stats.get('id_maintenance_expired', 0)
+        total_stats['companies_processed'] += muse_stats.get('companies_processed', 0)
+        total_stats['opensearch_indexed'] += muse_stats.get('jobs_indexed_opensearch', 0)
     
     try:
         # Determine which service(s) to run based on JOB_SOURCE
@@ -76,6 +98,7 @@ def main() -> None:
                 total_stats['greenhouse_jobs_inserted'] = gh_stats.get('jobs_inserted', 0)
                 total_stats['greenhouse_jobs_existed'] = gh_stats.get('jobs_existed', 0)
                 total_stats['greenhouse_jobs_failed'] = gh_stats.get('jobs_failed', 0)
+                total_stats['greenhouse_jobs_not_found'] = gh_stats.get('jobs_not_found', 0)
                 total_stats['companies_processed'] = gh_stats.get('companies_processed', 0)
                 total_stats['opensearch_indexed'] = gh_stats.get('jobs_indexed_opensearch', 0)
             
@@ -89,6 +112,7 @@ def main() -> None:
                 total_stats['workday_jobs_inserted'] = wd_stats.get('jobs_inserted', 0)
                 total_stats['workday_jobs_existed'] = wd_stats.get('jobs_existed', 0)
                 total_stats['workday_jobs_failed'] = wd_stats.get('jobs_failed', 0)
+                total_stats['workday_jobs_not_found'] = wd_stats.get('jobs_not_found', 0)
                 total_stats['companies_processed'] = wd_stats.get('companies_processed', 0)
                 total_stats['opensearch_indexed'] = wd_stats.get('jobs_indexed_opensearch', 0)
             
@@ -109,6 +133,7 @@ def main() -> None:
                 total_stats['greenhouse_jobs_inserted'] = gh_stats.get('jobs_inserted', 0)
                 total_stats['greenhouse_jobs_existed'] = gh_stats.get('jobs_existed', 0)
                 total_stats['greenhouse_jobs_failed'] = gh_stats.get('jobs_failed', 0)
+                total_stats['greenhouse_jobs_not_found'] = gh_stats.get('jobs_not_found', 0)
                 total_stats['companies_processed'] += gh_stats.get('companies_processed', 0)
                 total_stats['opensearch_indexed'] += gh_stats.get('jobs_indexed_opensearch', 0)
             
@@ -123,11 +148,65 @@ def main() -> None:
                 total_stats['workday_jobs_inserted'] = wd_stats.get('jobs_inserted', 0)
                 total_stats['workday_jobs_existed'] = wd_stats.get('jobs_existed', 0)
                 total_stats['workday_jobs_failed'] = wd_stats.get('jobs_failed', 0)
+                total_stats['workday_jobs_not_found'] = wd_stats.get('jobs_not_found', 0)
                 total_stats['companies_processed'] += wd_stats.get('companies_processed', 0)
                 total_stats['opensearch_indexed'] += wd_stats.get('jobs_indexed_opensearch', 0)
-            
+
+        elif job_source == 'muse':
+            logger.info("Running Muse extraction only")
+            muse_service = MuseExtractionService()
+            muse_stats = muse_service.run(
+                limit_companies=config.MUSE_TEST_COMPANY_LIMIT,
+                limit_jobs_per_company=config.MUSE_TEST_JOB_LIMIT
+            )
+            _aggregate_muse_stats(muse_stats)
+
+        elif job_source == 'all':
+            logger.info("Running Greenhouse, Workday and Muse extraction")
+            # Run Greenhouse first
+            logger.info("Starting Greenhouse extraction...")
+            greenhouse_service = GreenhouseExtractionService(
+                max_workers=config.GREENHOUSE_COMPANY_WORKERS,
+                max_job_workers=config.GREENHOUSE_JOB_WORKERS,
+                id_maintenance_workers=config.GREENHOUSE_ID_MAINTENANCE_WORKERS
+            )
+            gh_stats = greenhouse_service.run()
+            logger.info("Greenhouse extraction completed")
+
+            if gh_stats:
+                total_stats['greenhouse_jobs_inserted'] = gh_stats.get('jobs_inserted', 0)
+                total_stats['greenhouse_jobs_existed'] = gh_stats.get('jobs_existed', 0)
+                total_stats['greenhouse_jobs_failed'] = gh_stats.get('jobs_failed', 0)
+                total_stats['greenhouse_jobs_not_found'] = gh_stats.get('jobs_not_found', 0)
+                total_stats['companies_processed'] += gh_stats.get('companies_processed', 0)
+                total_stats['opensearch_indexed'] += gh_stats.get('jobs_indexed_opensearch', 0)
+
+            # Then run Workday
+            logger.info("Starting Workday extraction...")
+            workday_service = WorkdayExtractionService()
+            wd_stats = workday_service.run()
+            logger.info("Workday extraction completed")
+
+            if wd_stats:
+                total_stats['workday_jobs_inserted'] = wd_stats.get('jobs_inserted', 0)
+                total_stats['workday_jobs_existed'] = wd_stats.get('jobs_existed', 0)
+                total_stats['workday_jobs_failed'] = wd_stats.get('jobs_failed', 0)
+                total_stats['workday_jobs_not_found'] = wd_stats.get('jobs_not_found', 0)
+                total_stats['companies_processed'] += wd_stats.get('companies_processed', 0)
+                total_stats['opensearch_indexed'] += wd_stats.get('jobs_indexed_opensearch', 0)
+
+            # Finally run Muse
+            logger.info("Starting Muse extraction...")
+            muse_service = MuseExtractionService()
+            muse_stats = muse_service.run(
+                limit_companies=config.MUSE_TEST_COMPANY_LIMIT,
+                limit_jobs_per_company=config.MUSE_TEST_JOB_LIMIT
+            )
+            logger.info("Muse extraction completed")
+            _aggregate_muse_stats(muse_stats)
+
         else:
-            logger.error(f"Invalid JOB_SOURCE: {job_source}. Must be 'greenhouse', 'workday', or 'both'")
+            logger.error(f"Invalid JOB_SOURCE: {job_source}. Must be 'greenhouse', 'workday', 'muse', 'both', or 'all'")
             error_msg = f"Invalid JOB_SOURCE: {job_source}"
             db_manager.add_run_error(stat_id, "ConfigError", error_msg)
             raise ValueError(error_msg)

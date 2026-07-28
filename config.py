@@ -53,8 +53,8 @@ SKILLS = [
 MONGODB_URI = os.getenv('PROD_MONGODB_URI')
 
 # Job source configuration
-# Values: 'greenhouse', 'workday', 'both'
-JOB_SOURCE = os.getenv('JOB_SOURCE', 'both').lower()
+# Values: 'greenhouse', 'workday', 'muse', 'both' (greenhouse+workday), 'all' (all three)
+JOB_SOURCE = os.getenv('JOB_SOURCE', 'all').lower()
 
 # Greenhouse parallel processing configuration
 GREENHOUSE_COMPANY_WORKERS = int(os.getenv('GREENHOUSE_COMPANY_WORKERS', '20'))  # Increased from 10
@@ -65,6 +65,16 @@ GREENHOUSE_ID_MAINTENANCE_WORKERS = int(os.getenv('GREENHOUSE_ID_MAINTENANCE_WOR
 WORKDAY_SELENIUM_WORKERS = int(os.getenv('WORKDAY_SELENIUM_WORKERS', '6'))  # Selenium drivers for ID maintenance (increased from 3)
 WORKDAY_PARALLEL_WORKERS = int(os.getenv('WORKDAY_PARALLEL_WORKERS', '20'))  # Job processing workers (increased from 14)
 WORKDAY_BATCH_SIZE = int(os.getenv('WORKDAY_BATCH_SIZE', '150'))  # Batch size (increased from 100)
+
+# Muse (The Muse) configuration
+MUSE_API_KEY = os.getenv('MUSE_API_KEY')  # Optional — higher rate limit (3600/hr vs 500/hr anon)
+MUSE_API_BASE_URL = "https://www.themuse.com/api/public"
+MUSE_BATCH_SIZE = int(os.getenv('MUSE_BATCH_SIZE', '100'))  # Companies per processing batch
+MUSE_COMPANY_WORKERS = int(os.getenv('MUSE_COMPANY_WORKERS', '5'))  # Reserved for future parallel processing
+MUSE_JOB_WORKERS = int(os.getenv('MUSE_JOB_WORKERS', '5'))  # Reserved for future parallel processing
+# Optional test limiters for smoke runs (None = process everything)
+MUSE_TEST_COMPANY_LIMIT = int(os.getenv('MUSE_TEST_COMPANY_LIMIT')) if os.getenv('MUSE_TEST_COMPANY_LIMIT') else None
+MUSE_TEST_JOB_LIMIT = int(os.getenv('MUSE_TEST_JOB_LIMIT')) if os.getenv('MUSE_TEST_JOB_LIMIT') else None
 
 # Required environment variables
 REQUIRED_ENV_VARS = ['PROD_MONGODB_URI']

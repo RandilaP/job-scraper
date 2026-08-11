@@ -91,6 +91,28 @@ Simply run the main script:
 python main.py
 ```
 
+## Azure VM CI/CD
+
+The production flow for this repo is:
+
+1. GitHub Actions deploys the repository to your Azure VM on every merge to `main`.
+2. The VM keeps a local virtual environment in the deployment directory.
+3. A cron job runs `cron_runner.sh`, which activates the venv and executes `runner.py`.
+
+Required GitHub secrets:
+
+- `AZURE_VM_HOST`
+- `AZURE_VM_USER`
+- `AZURE_VM_SSH_KEY`
+
+One-time cron example on the VM:
+
+```bash
+*/15 * * * * /home/<vm-user>/job-extractor/cron_runner.sh >> /var/log/job-extractor.log 2>&1
+```
+
+Adjust the schedule to match how often you want the worker to run.
+
 ## Remote Logging
 
 The application includes remote logging via Logtail (Better Stack):

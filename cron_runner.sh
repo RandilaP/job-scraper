@@ -1,10 +1,11 @@
 #!/bin/bash
 
-# Navigate to the workspace directory
-cd "/Users/randila/WORKSPACE/Jobhelpers/job extractor v2.1" || exit 1
+# Resolve the repository directory relative to this script so it works on the VM.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR" || exit 1
 
 # Activate the virtual environment
-source venv/bin/activate
+source "$SCRIPT_DIR/venv/bin/activate"
 
 # Execute the runner script
 python runner.py

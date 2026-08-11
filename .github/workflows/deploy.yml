@@ -1,0 +1,71 @@
+name: Deploy to Azure VM
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_PATH: /home/${{ secrets.AZURE_VM_USER }}/job-extractor
+      VM_SSH_PORT: ${{ secrets.AZURE_VM_SSH_PORT || 22 }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Add VM SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.AZURE_VM_SSH_KEY }}
+
+      - name: Trust VM host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H -p "${VM_SSH_PORT}" "${{ secrets.AZURE_VM_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Create deployment directory on VM
+        run: |
+          ssh -p "${VM_SSH_PORT}" "${{ secrets.AZURE_VM_USER }}@${{ secrets.AZURE_VM_HOST }}" "mkdir -p '${DEPLOY_PATH}'"
+
+      - name: Sync repository to VM
+        run: |
+          rsync -az --delete \
+            -e "ssh -p ${VM_SSH_PORT}" \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude '.env' \
+            --exclude 'venv/' \
+            --exclude '__pycache__/' \
+            --exclude '*.pyc' \
+            ./ "${{ secrets.AZURE_VM_USER }}@${{ secrets.AZURE_VM_HOST }}:${DEPLOY_PATH}/"
+
+      - name: Install dependencies on VM
+        run: |
+          ssh -p "${VM_SSH_PORT}" "${{ secrets.AZURE_VM_USER }}@${{ secrets.AZURE_VM_HOST }}" <<EOF
+          set -euo pipefail
+
+          DEPLOY_PATH="${DEPLOY_PATH}"
+          cd "$DEPLOY_PATH"
+
+          if ! command -v python3 >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y python3 python3-venv python3-pip
+          fi
+
+          if [ ! -d venv ]; then
+            python3 -m venv venv
+          fi
+
+          . venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+          chmod +x cron_runner.sh
+          EOF

@@ -72,7 +72,7 @@ job extractor v2.1/
 
 2. Install spaCy English model:
    ```bash
-   python -m spacy download en_core_web_sm
+  pip install -U https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
    ```
 
 3. Create a `.env` file with your configuration:
